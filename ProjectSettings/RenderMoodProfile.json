@@ -1,0 +1,168 @@
+{
+    "UseAutoTimeline": false,
+    "IntroEndTime": 20.0,
+    "CombatEndTime": 35.0,
+    "ClimaxEndTime": 50.0,
+    "MatchDuration": 60.0,
+    "PhaseBlendSpeed": 2.5,
+    "IntroSnapshot": {
+        "PostExposure": 0.11999999731779099,
+        "Contrast": 4.5,
+        "Saturation": 17.0,
+        "BloomThreshold": 0.784915030002594,
+        "BloomIntensity": 0.6200000047683716,
+        "BloomScatter": 0.800000011920929,
+        "VignetteIntensity": 0.05000000074505806,
+        "ChromaticAberrationIntensity": 0.0,
+        "FogDensity": 0.0044999998062849049,
+        "FogStartDistance": 30.0,
+        "FogEndDistance": 86.0,
+        "FogColor": {
+            "r": 0.3400000035762787,
+            "g": 0.3100000023841858,
+            "b": 0.2800000011920929,
+            "a": 1.0
+        },
+        "AmbientIntensity": 1.1200000047683716,
+        "AmbientSkyColor": {
+            "r": 0.1599999964237213,
+            "g": 0.20000000298023225,
+            "b": 0.2800000011920929,
+            "a": 1.0
+        },
+        "AmbientEquatorColor": {
+            "r": 0.2199999988079071,
+            "g": 0.1899999976158142,
+            "b": 0.1599999964237213,
+            "a": 1.0
+        },
+        "AmbientGroundColor": {
+            "r": 0.11999999731779099,
+            "g": 0.10999999940395355,
+            "b": 0.10000000149011612,
+            "a": 1.0
+        },
+        "ReflectionIntensity": 1.0499999523162842,
+        "SkyboxExposure": 1.1799999475479127
+    },
+    "CombatSnapshot": {
+        "PostExposure": -0.3199999928474426,
+        "Contrast": 12.0,
+        "Saturation": 12.0,
+        "BloomThreshold": 2.3499999046325685,
+        "BloomIntensity": 0.25999999046325686,
+        "BloomScatter": 0.5600000023841858,
+        "VignetteIntensity": 0.18000000715255738,
+        "ChromaticAberrationIntensity": 0.009999999776482582,
+        "FogDensity": 0.014999999664723874,
+        "FogStartDistance": 7.347732067108154,
+        "FogEndDistance": 80.99067687988281,
+        "FogColor": {
+            "r": 0.27000001072883608,
+            "g": 0.23999999463558198,
+            "b": 0.20999999344348908,
+            "a": 1.0
+        },
+        "AmbientIntensity": 0.6399999856948853,
+        "AmbientSkyColor": {
+            "r": 0.05999999865889549,
+            "g": 0.07999999821186066,
+            "b": 0.11999999731779099,
+            "a": 1.0
+        },
+        "AmbientEquatorColor": {
+            "r": 0.14000000059604646,
+            "g": 0.11999999731779099,
+            "b": 0.10000000149011612,
+            "a": 1.0
+        },
+        "AmbientGroundColor": {
+            "r": 0.07000000029802323,
+            "g": 0.05999999865889549,
+            "b": 0.05000000074505806,
+            "a": 1.0
+        },
+        "ReflectionIntensity": 0.7799999713897705,
+        "SkyboxExposure": 0.7799999713897705
+    },
+    "ClimaxSnapshot": {
+        "PostExposure": -0.5,
+        "Contrast": 16.0,
+        "Saturation": 8.0,
+        "BloomThreshold": 2.549999952316284,
+        "BloomIntensity": 0.18000000715255738,
+        "BloomScatter": 0.5,
+        "VignetteIntensity": 0.23999999463558198,
+        "ChromaticAberrationIntensity": 0.03999999910593033,
+        "FogDensity": 0.02199999988079071,
+        "FogStartDistance": 11.011177062988282,
+        "FogEndDistance": 81.99011993408203,
+        "FogColor": {
+            "r": 0.23000000417232514,
+            "g": 0.20000000298023225,
+            "b": 0.18000000715255738,
+            "a": 1.0
+        },
+        "AmbientIntensity": 0.5400000214576721,
+        "AmbientSkyColor": {
+            "r": 0.05000000074505806,
+            "g": 0.05999999865889549,
+            "b": 0.09000000357627869,
+            "a": 1.0
+        },
+        "AmbientEquatorColor": {
+            "r": 0.10999999940395355,
+            "g": 0.10000000149011612,
+            "b": 0.07999999821186066,
+            "a": 1.0
+        },
+        "AmbientGroundColor": {
+            "r": 0.05000000074505806,
+            "g": 0.03999999910593033,
+            "b": 0.03999999910593033,
+            "a": 1.0
+        },
+        "ReflectionIntensity": 0.6800000071525574,
+        "SkyboxExposure": 0.3412380814552307
+    },
+    "EliminationSnapshot": {
+        "PostExposure": -0.4130159914493561,
+        "Contrast": 20.0,
+        "Saturation": 16.854772567749025,
+        "BloomThreshold": 2.75,
+        "BloomIntensity": 0.11999999731779099,
+        "BloomScatter": 0.4846089482307434,
+        "VignetteIntensity": 0.3741622865200043,
+        "ChromaticAberrationIntensity": 0.08966494351625443,
+        "FogDensity": 0.029999999329447748,
+        "FogStartDistance": 6.2695512771606449,
+        "FogEndDistance": 77.32982635498047,
+        "FogColor": {
+            "r": 0.18000000715255738,
+            "g": 0.1599999964237213,
+            "b": 0.14000000059604646,
+            "a": 1.0
+        },
+        "AmbientIntensity": 0.41999998688697817,
+        "AmbientSkyColor": {
+            "r": 0.029999999329447748,
+            "g": 0.03999999910593033,
+            "b": 0.05999999865889549,
+            "a": 1.0
+        },
+        "AmbientEquatorColor": {
+            "r": 0.07999999821186066,
+            "g": 0.07000000029802323,
+            "b": 0.05999999865889549,
+            "a": 1.0
+        },
+        "AmbientGroundColor": {
+            "r": 0.03999999910593033,
+            "g": 0.029999999329447748,
+            "b": 0.029999999329447748,
+            "a": 1.0
+        },
+        "ReflectionIntensity": 0.5895529389381409,
+        "SkyboxExposure": 0.019776713103055955
+    }
+}

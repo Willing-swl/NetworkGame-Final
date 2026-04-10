@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using NanoFrame.Rendering;
 
 namespace NanoFrame.Event
 {
@@ -28,5 +29,61 @@ namespace NanoFrame.Event
     {
         // 你可以把触发实体化的游戏物体传出去，方便别人获取它的位置或组件
         public GameObject InkObject;
+    }
+
+    public struct OnPlayerStateChangedEvent : IEventMessage
+    {
+        public int PlayerID;
+        public string StateName;
+    }
+
+    public struct OnPlayerSprayEvent : IEventMessage
+    {
+        public int PlayerID;
+        public Vector3 Origin;
+        public Vector3 Direction;
+    }
+
+    public struct OnPlayerHitEvent : IEventMessage
+    {
+        public int AttackerPlayerID;
+        public int DefenderPlayerID;
+        public float DamagePercent;
+        public Vector3 Force;
+    }
+
+    public struct OnTileCaptureProgressChangedEvent : IEventMessage
+    {
+        public int TileID;
+        public int OwnerPlayerID;
+        public float Progress;
+        public float Threshold;
+    }
+
+    public struct OnMatchTimerChangedEvent : IEventMessage
+    {
+        public float RemainingTime;
+        public float TotalTime;
+    }
+
+    public struct OnMatchFinishedEvent : IEventMessage
+    {
+        public int WinnerPlayerID;
+        public bool IsDraw;
+        public int Player1TerritoryCount;
+        public int Player2TerritoryCount;
+    }
+
+    public struct OnDebugBalanceChangedEvent : IEventMessage
+    {
+        public string FieldName;
+        public float Value;
+    }
+
+    // 渲染气氛阶段切换事件
+    public struct OnRenderMoodPhaseChangedEvent : IEventMessage
+    {
+        public RenderMoodPhase Phase;
+        public bool IsManual;
     }
 }

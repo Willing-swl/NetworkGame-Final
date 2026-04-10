@@ -25,14 +25,14 @@ namespace Project.Gameplay
             _isSolidified = false;
 
             // 表现层：设置为半透明（预告态），关闭碰撞器
-            Debug.Log("水泡弹被射出！当前是预告态。");
+            UnityEngine.Debug.Log("水泡弹被射出！当前是预告态。");
         }
 
         // 2. 实现接口：当对象池把这个物体回收时，自动执行
         public void OnUnspawn()
         {
             // 回收时的清理工作（比如停止身上的粒子特效）
-            Debug.Log("水泡弹被回收进对象池了，清理状态。");
+            UnityEngine.Debug.Log("水泡弹被回收进对象池了，清理状态。");
         }
 
         private void Update()
@@ -52,7 +52,7 @@ namespace Project.Gameplay
         private void Solidify()
         {
             _isSolidified = true;
-            Debug.Log("时间到！水泡弹爆炸/实体化！");
+            UnityEngine.Debug.Log("时间到！水泡弹爆炸/实体化！");
 
             // 表现层：变成高光发光材质，开启碰撞器等操作...
 

@@ -15,7 +15,7 @@ namespace Project.Gameplay
 
             // 业务逻辑：暂停游戏时间
             Time.timeScale = 0f;
-            Debug.Log("游戏已暂停！");
+            UnityEngine.Debug.Log("游戏已暂停！");
         }
 
         public override void OnClose()
@@ -24,7 +24,7 @@ namespace Project.Gameplay
 
             // 业务逻辑：恢复游戏时间
             Time.timeScale = 1f;
-            Debug.Log("游戏继续！");
+            UnityEngine.Debug.Log("游戏继续！");
         }
 
         // 绑定给 UI 上的“继续游戏”按钮
