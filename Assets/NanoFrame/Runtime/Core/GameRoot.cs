@@ -7,6 +7,7 @@ using Project.Gameplay.Input;
 using Project.Gameplay.Match;
 using Project.Gameplay.Player;
 using Project.Gameplay.CameraRig;
+using Project.Gameplay.Visuals;
 
 namespace NanoFrame.Core // 完全使用你原有的核心命名空间
 {
@@ -45,6 +46,7 @@ namespace NanoFrame.Core // 完全使用你原有的核心命名空间
             _managers.Add(PrototypeMatchManager.Instance);
             _managers.Add(PrototypeGridManager.Instance);
             _managers.Add(PrototypePlayerManager.Instance);
+            _managers.Add(PrototypeSprayVfxManager.Instance);
 
             // 2. 严格按顺序初始化
             foreach (var manager in _managers)

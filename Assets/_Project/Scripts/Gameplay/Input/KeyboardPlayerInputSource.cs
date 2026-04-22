@@ -27,6 +27,7 @@ namespace Project.Gameplay.Input
             { KeyCode.P, Key.P },
             { KeyCode.Q, Key.Q },
             { KeyCode.E, Key.E },
+            { KeyCode.Keypad0, Key.Numpad0 },
             { KeyCode.Space, Key.Space },
             { KeyCode.Tab, Key.Tab },
             { KeyCode.Escape, Key.Escape },
@@ -57,10 +58,12 @@ namespace Project.Gameplay.Input
 
             bool sprayHeld = IsHeld(_bindings.Spray);
             bool sprayPressed = IsPressed(_bindings.Spray);
+            bool chargeHeld = IsHeld(_bindings.Charge);
+            bool chargePressed = IsPressed(_bindings.Charge);
             bool dodgePressed = IsPressed(_bindings.Dodge);
             bool pausePressed = IsPressed(_bindings.Pause);
 
-            return new PlayerInputFrame(move, aim, sprayHeld, sprayPressed, dodgePressed, pausePressed);
+            return new PlayerInputFrame(move, aim, sprayHeld, sprayPressed, chargeHeld, chargePressed, dodgePressed, pausePressed);
         }
 
         private Vector2 ReadMoveVector()

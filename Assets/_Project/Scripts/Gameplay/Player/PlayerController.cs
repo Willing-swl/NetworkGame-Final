@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NanoFrame.Event;
 using NanoFrame.FSM;
 using NanoFrame.Utility;
@@ -34,9 +35,11 @@ namespace Project.Gameplay.Player
         private Vector3 _knockbackDirection = Vector3.zero;
         private float _currentDeltaTime;
         private float _sprayCooldownRemaining;
+        private float _shockwaveCooldownRemaining;
         private float _dodgeCooldownRemaining;
         private float _stateTimer;
         private float _damagePercent;
+        private int _chargeAbsorbedTileCount;
         private bool _isEliminated;
         private bool _isInvulnerable;
         private int _playerId;
@@ -50,6 +53,7 @@ namespace Project.Gameplay.Player
         public bool IsEliminated => _isEliminated;
         public bool HasMoveInput => _currentInput.HasMoveInput && _currentInput.Move.sqrMagnitude >= _settings.DeadZone * _settings.DeadZone;
         public bool CanSpray => _sprayCooldownRemaining <= 0f;
+        public bool CanCharge => _shockwaveCooldownRemaining <= 0f;
         public bool CanDodge => _dodgeCooldownRemaining <= 0f;
 
         public void Initialize(int playerId, PrototypeBalanceConfig settings, Color bodyColor)
@@ -75,6 +79,7 @@ namespace Project.Gameplay.Player
             _stateMachine.AddState(new IdleState());
             _stateMachine.AddState(new MoveState());
             _stateMachine.AddState(new SprayState());
+            _stateMachine.AddState(new ChargeState());
             _stateMachine.AddState(new DodgeState());
             _stateMachine.AddState(new HurtState());
             _stateMachine.AddState(new KnockbackState());
@@ -94,9 +99,11 @@ namespace Project.Gameplay.Player
             _isInvulnerable = false;
             _damagePercent = 0f;
             _sprayCooldownRemaining = 0f;
+            _shockwaveCooldownRemaining = 0f;
             _dodgeCooldownRemaining = 0f;
             _stateTimer = 0f;
             _knockbackDirection = Vector3.zero;
+            _chargeAbsorbedTileCount = 0;
             _currentInput = default;
             _facingDirection = NormalizeFacingDirection(facingDirection);
             _currentStateName = nameof(IdleState);
@@ -128,6 +135,11 @@ namespace Project.Gameplay.Player
             if (_sprayCooldownRemaining > 0f)
             {
                 _sprayCooldownRemaining = Mathf.Max(0f, _sprayCooldownRemaining - deltaTime);
+            }
+
+            if (_shockwaveCooldownRemaining > 0f)
+            {
+                _shockwaveCooldownRemaining = Mathf.Max(0f, _shockwaveCooldownRemaining - deltaTime);
             }
 
             if (_dodgeCooldownRemaining > 0f)
@@ -250,7 +262,7 @@ namespace Project.Gameplay.Player
             Vector3 sprayDirection = _facingDirection;
             Vector3 sprayOrigin = _rigidbody.position;
 
-            PrototypeGridManager.Instance.TryApplySpray(_playerId, sprayOrigin, sprayDirection, _currentDeltaTime);
+            PrototypeGridManager.Instance.TryApplySpray(_playerId, sprayOrigin, sprayDirection, 10f);
 
             EventManager.Instance.Fire(new OnPlayerSprayEvent
             {
@@ -273,6 +285,76 @@ namespace Project.Gameplay.Player
             _facingDirection = GetPreferredDodgeDirection();
             _rigidbody.rotation = Quaternion.LookRotation(_facingDirection, Vector3.up);
             LogDebug($"闪避开始，方向={FormatVector3(_facingDirection)} 位置={FormatVector3(_rigidbody.position)}");
+        }
+
+        private void ReleaseShockwave()
+        {
+            if (_chargeAbsorbedTileCount <= 0)
+            {
+                LogDebug("未吸收到己方格子，无法释放冲击波！");
+                _chargeAbsorbedTileCount = 0;
+                FinishActionState();
+                return;
+            }
+
+            // 直接通过公式计算威力，而不是按段位！
+            // 每吸取1格，威力就平滑增加，无缝过渡！
+            float tileStep = Mathf.Max(0.1f, _settings.TileSize + _settings.TileGap);
+            float powerRatio = Mathf.Clamp01((float)_chargeAbsorbedTileCount / _settings.ShockwaveAbsorbTileLimit);
+            
+            float radius = tileStep * Mathf.Lerp(_settings.ShockwaveRadiusBase, _settings.ShockwaveRadiusBase + 2f * _settings.ShockwaveRadiusTierStep, powerRatio);
+            float force = Mathf.Lerp(_settings.ShockwaveForceBase, _settings.ShockwaveForceBase + 2f * _settings.ShockwaveForceTierStep, powerRatio);
+            float damagePercent = Mathf.Lerp(_settings.ShockwaveDamageBase, _settings.ShockwaveDamageBase + 2f * _settings.ShockwaveDamageTierStep, powerRatio);
+
+            // 保持一个事件格式，将Tier强行设为一个动态浮点等级供特效判断
+            int shockwaveTier = 1 + Mathf.FloorToInt(powerRatio * 2f);
+
+            PrototypePlayerManager playerManager = PrototypePlayerManager.Instance;
+            if (playerManager != null)
+            {
+                IReadOnlyList<PlayerController> players = playerManager.Players;
+                if (players != null)
+                {
+                    for (int index = 0; index < players.Count; index++)
+                    {
+                        PlayerController target = players[index];
+                        if (target == null || target == this || target.IsEliminated)
+                        {
+                            continue;
+                        }
+
+                        Vector3 offset = target.transform.position - _rigidbody.position;
+                        offset.y = 0f;
+                        float distance = offset.magnitude;
+                        if (distance > radius)
+                        {
+                            continue;
+                        }
+
+                        Vector3 forceDirection = distance > 0.0001f ? offset.normalized : _facingDirection;
+                        float falloff = 1f - Mathf.Clamp01(distance / Mathf.Max(0.01f, radius));
+                        float appliedForce = force * Mathf.Lerp(0.65f, 1f, falloff);
+                        float appliedDamage = damagePercent * Mathf.Lerp(0.75f, 1f, falloff);
+                        target.ApplyHit(forceDirection * appliedForce, _playerId, appliedDamage);
+                    }
+                }
+            }
+
+            EventManager.Instance.Fire(new OnPlayerShockwaveEvent
+            {
+                PlayerID = _playerId,
+                Origin = _rigidbody.position,
+                AbsorbedTileCount = _chargeAbsorbedTileCount,
+                ShockwaveTier = shockwaveTier,
+                Radius = radius,
+                Force = force,
+                DamagePercent = damagePercent
+            });
+
+            LogDebug($"冲击波释放，平滑等级={shockwaveTier} 吸收格子={_chargeAbsorbedTileCount} 半径={radius:0.00} 力={force:0.00}");
+
+            _chargeAbsorbedTileCount = 0;
+            FinishActionState();
         }
 
         private void ApplyDodgeMovement()
@@ -308,6 +390,12 @@ namespace Project.Gameplay.Player
 
         private void FinishActionState()
         {
+            if (_currentInput.ChargeHeld && CanCharge)
+            {
+                _stateMachine.ChangeState<ChargeState>();
+                return;
+            }
+
             if (_currentInput.DodgePressed && CanDodge)
             {
                 _stateMachine.ChangeState<DodgeState>();
@@ -359,6 +447,12 @@ namespace Project.Gameplay.Player
 
             public override void OnUpdate(PlayerController owner)
             {
+                if (owner._currentInput.HasChargeInput && owner.CanCharge)
+                {
+                    owner._stateMachine.ChangeState<ChargeState>();
+                    return;
+                }
+
                 if (owner._currentInput.DodgePressed && owner.CanDodge)
                 {
                     owner._stateMachine.ChangeState<DodgeState>();
@@ -388,6 +482,12 @@ namespace Project.Gameplay.Player
 
             public override void OnUpdate(PlayerController owner)
             {
+                if (owner._currentInput.HasChargeInput && owner.CanCharge)
+                {
+                    owner._stateMachine.ChangeState<ChargeState>();
+                    return;
+                }
+
                 if (owner._currentInput.DodgePressed && owner.CanDodge)
                 {
                     owner._stateMachine.ChangeState<DodgeState>();
@@ -425,6 +525,12 @@ namespace Project.Gameplay.Player
             {
                 owner._stateTimer = Mathf.Max(0f, owner._stateTimer - owner._currentDeltaTime);
 
+                if (owner._currentInput.HasChargeInput && owner.CanCharge)
+                {
+                    owner._stateMachine.ChangeState<ChargeState>();
+                    return;
+                }
+
                 if (owner._currentInput.DodgePressed && owner.CanDodge)
                 {
                     owner._stateMachine.ChangeState<DodgeState>();
@@ -447,6 +553,49 @@ namespace Project.Gameplay.Player
                 }
 
                 owner.FinishActionState();
+            }
+        }
+
+        private sealed class ChargeState : PlayerStateBase
+        {
+            public override void OnEnter(PlayerController owner)
+            {
+                owner._isInvulnerable = false;
+                owner._stateTimer = owner._settings.ChargeHoldSeconds;
+                owner._chargeAbsorbedTileCount = PrototypeGridManager.Instance != null
+                    ? PrototypeGridManager.Instance.AbsorbTilesForShockwave(owner._playerId, owner._rigidbody.position, owner._settings.ShockwaveAbsorbTileLimit)
+                    : 0;
+                owner._shockwaveCooldownRemaining = owner._settings.ShockwaveCooldown;
+                owner.TriggerStateChanged(nameof(ChargeState));
+                owner.LogDebug($"取色蓄力，吸收格子={owner._chargeAbsorbedTileCount} 搜索半径={owner._settings.ShockwaveAbsorbSearchRadius}");
+                EventManager.Instance.Fire(new OnPlayerChargeStartedEvent
+                {
+                    PlayerID = owner._playerId,
+                    AbsorbedTileCount = owner._chargeAbsorbedTileCount,
+                    SearchRadius = owner._settings.ShockwaveAbsorbSearchRadius
+                });
+                if (owner._chargeAbsorbedTileCount <= 0)
+                {
+                    owner.LogDebug($"取色失败：附近没有可吸收的己方格子（搜索半径={owner._settings.ShockwaveAbsorbSearchRadius}）");
+                }
+            }
+
+            public override void OnUpdate(PlayerController owner)
+            {
+                owner._stateTimer = Mathf.Max(0f, owner._stateTimer - owner._currentDeltaTime);
+
+                if (owner._currentInput.ChargeHeld && owner._stateTimer > 0f)
+                {
+                    return;
+                }
+
+                owner.ReleaseShockwave();
+            }
+
+            public override void OnExit(PlayerController owner)
+            {
+                owner._chargeAbsorbedTileCount = 0;
+                owner._stateTimer = 0f;
             }
         }
 

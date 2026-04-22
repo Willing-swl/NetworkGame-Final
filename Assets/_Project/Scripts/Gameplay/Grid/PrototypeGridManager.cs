@@ -161,6 +161,65 @@ namespace Project.Gameplay.Grid
             return appliedAny;
         }
 
+        public int AbsorbTilesForShockwave(int playerId, Vector3 worldPosition, int maxTiles)
+        {
+            if (_cells == null || _settings == null)
+            {
+                return 0;
+            }
+
+            Vector2Int centerCell = WorldToCell(worldPosition);
+            if (!IsValidCell(centerCell))
+            {
+                return 0;
+            }
+
+            if (_cells[centerCell.x, centerCell.y].OwnerPlayerID != playerId)
+            {
+                return 0;
+            }
+
+            int tileLimit = Mathf.Clamp(maxTiles, 1, _settings.GridWidth * _settings.GridHeight);
+            int absorbedCount = 0;
+
+            System.Collections.Generic.Queue<Vector2Int> queue = new System.Collections.Generic.Queue<Vector2Int>();
+            System.Collections.Generic.HashSet<Vector2Int> visited = new System.Collections.Generic.HashSet<Vector2Int>();
+
+            queue.Enqueue(centerCell);
+            visited.Add(centerCell);
+
+            while (queue.Count > 0 && absorbedCount < tileLimit)
+            {
+                Vector2Int current = queue.Dequeue();
+                GridCellState cell = _cells[current.x, current.y];
+
+                if (cell.OwnerPlayerID == playerId)
+                {
+                    AbsorbCell(cell, playerId);
+                    absorbedCount++;
+
+                    Vector2Int[] neighbors = 
+                    {
+                        new Vector2Int(current.x + 1, current.y),
+                        new Vector2Int(current.x - 1, current.y),
+                        new Vector2Int(current.x, current.y + 1),
+                        new Vector2Int(current.x, current.y - 1)
+                    };
+
+                    foreach (Vector2Int neighbor in neighbors)
+                    {
+                        if (IsValidCell(neighbor) && !visited.Contains(neighbor))
+                        {
+                            visited.Add(neighbor);
+                            queue.Enqueue(neighbor);
+                        }
+                    }
+                }
+            }
+
+            return absorbedCount;
+        }
+
         private void BuildGrid()
         {
             if (_gridRoot != null)
@@ -226,8 +285,7 @@ namespace Project.Gameplay.Grid
             float progressDelta = deltaTime / Mathf.Max(0.01f, captureSeconds);
             cell.CaptureProgress = Mathf.Clamp01(cell.CaptureProgress + progressDelta);
 
-            Color targetColor = GetColorForOwner(playerId);
-            Color displayColor = Color.Lerp(_settings.NeutralTileColor, targetColor, cell.CaptureProgress);
+            Color displayColor = previousOwner == 0 ? GetColorForOwner(playerId) : GetColorForOwner(previousOwner);
             cell.View?.ApplyVisual(displayColor, cell.CaptureProgress);
 
             EventManager.Instance.Fire(new OnTileCaptureProgressChangedEvent
@@ -273,6 +331,35 @@ namespace Project.Gameplay.Grid
             });
 
             return true;
+        }
+
+        private void AbsorbCell(GridCellState cell, int playerId)
+        {
+            if (cell.OwnerPlayerID != playerId)
+            {
+                return;
+            }
+
+            cell.OwnerPlayerID = 0;
+            cell.CaptureProgress = 0f;
+
+            if (playerId == 1)
+            {
+                _player1TerritoryCount = Mathf.Max(0, _player1TerritoryCount - 1);
+            }
+            else if (playerId == 2)
+            {
+                _player2TerritoryCount = Mathf.Max(0, _player2TerritoryCount - 1);
+            }
+
+            cell.View?.ApplyVisual(_settings.NeutralTileColor, 0f);
+
+            EventManager.Instance.Fire(new OnTileAbsorbedEvent
+            {
+                PlayerID = playerId,
+                TileID = cell.TileID,
+                GridPosition = cell.GridPosition
+            });
         }
 
         private Vector2Int WorldToCell(Vector3 worldPosition)

@@ -11,6 +11,7 @@ namespace Project.Gameplay.Input
         public KeyCode MoveLeft = KeyCode.A;
         public KeyCode MoveRight = KeyCode.D;
         public KeyCode Spray = KeyCode.F;
+        public KeyCode Charge = KeyCode.Q;
         public KeyCode Dodge = KeyCode.Space;
         public KeyCode Pause = KeyCode.Escape;
 
@@ -28,6 +29,7 @@ namespace Project.Gameplay.Input
                 MoveLeft = KeyCode.LeftArrow,
                 MoveRight = KeyCode.RightArrow,
                 Spray = KeyCode.RightControl,
+                Charge = KeyCode.Keypad0,
                 Dodge = KeyCode.RightShift,
                 Pause = KeyCode.KeypadEnter
             };

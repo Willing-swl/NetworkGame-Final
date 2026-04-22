@@ -44,6 +44,31 @@ namespace NanoFrame.Event
         public Vector3 Direction;
     }
 
+    public struct OnTileAbsorbedEvent : IEventMessage
+    {
+        public int PlayerID;
+        public int TileID;
+        public Vector2Int GridPosition;
+    }
+
+    public struct OnPlayerChargeStartedEvent : IEventMessage
+    {
+        public int PlayerID;
+        public int AbsorbedTileCount;
+        public int SearchRadius;
+    }
+
+    public struct OnPlayerShockwaveEvent : IEventMessage
+    {
+        public int PlayerID;
+        public Vector3 Origin;
+        public int AbsorbedTileCount;
+        public int ShockwaveTier;
+        public float Radius;
+        public float Force;
+        public float DamagePercent;
+    }
+
     public struct OnPlayerHitEvent : IEventMessage
     {
         public int AttackerPlayerID;

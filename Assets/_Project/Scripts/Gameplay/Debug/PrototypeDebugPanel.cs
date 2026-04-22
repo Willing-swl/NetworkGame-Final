@@ -12,6 +12,14 @@ namespace Project.Gameplay.Debug
     {
         private Rect _windowRect = new Rect(20f, 20f, 420f, 620f);
         private bool _visible = true;
+        private string _latestAbsorbMessage = "暂无吸收记录";
+        private string _latestChargeMessage = "暂无取色记录";
+        private string _latestShockwaveMessage = "暂无冲击波记录";
+        private string _latestHitMessage = "暂无受击记录";
+        private float _latestAbsorbMessageTime;
+        private float _latestChargeMessageTime;
+        private float _latestShockwaveMessageTime;
+        private float _latestHitMessageTime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Bootstrap()
@@ -28,6 +36,12 @@ namespace Project.Gameplay.Debug
         private void Awake()
         {
             DontDestroyOnLoad(gameObject);
+            SubscribeEvents();
+        }
+
+        private void OnDestroy()
+        {
+            UnsubscribeEvents();
         }
 
         private void OnGUI()
@@ -65,6 +79,10 @@ namespace Project.Gameplay.Debug
             GUILayout.Label($"剩余时间：{matchManager.RemainingTime:0.0} / {settings.RoundDuration:0.0}");
             GUILayout.Label($"P1 领地：{gridManager.Player1TerritoryCount}");
             GUILayout.Label($"P2 领地：{gridManager.Player2TerritoryCount}");
+            GUILayout.Label($"最近吸收：{FormatRecentMessage(_latestAbsorbMessage, _latestAbsorbMessageTime)}");
+            GUILayout.Label($"最近取色：{FormatRecentMessage(_latestChargeMessage, _latestChargeMessageTime)}");
+            GUILayout.Label($"最近冲击波：{FormatRecentMessage(_latestShockwaveMessage, _latestShockwaveMessageTime)}");
+            GUILayout.Label($"最近受击：{FormatRecentMessage(_latestHitMessage, _latestHitMessageTime)}");
 
             PrototypePlayerManager playerManager = PrototypePlayerManager.Instance;
             if (playerManager != null && playerManager.Players.Count >= 2)
@@ -75,8 +93,8 @@ namespace Project.Gameplay.Debug
 
             GUILayout.Space(8f);
             GUILayout.Label("按键说明");
-            GUILayout.Label("P1：W/A/S/D 移动，F 喷射，Space 闪避，Esc 暂停");
-            GUILayout.Label("P2：方向键移动，RightCtrl 喷射，RightShift 闪避，KeypadEnter 暂停");
+            GUILayout.Label("P1：W/A/S/D 移动，F 喷射，Q 取色/冲击波，Space 闪避，Esc 暂停");
+            GUILayout.Label("P2：方向键移动，RightCtrl 喷射，Keypad0 取色/冲击波，RightShift 闪避，KeypadEnter 暂停");
 
             GUILayout.Space(8f);
             GUILayout.Label("回合调参");
@@ -86,6 +104,12 @@ namespace Project.Gameplay.Debug
             DrawFloatSlider("敌方占领秒数", ref settings.EnemyCaptureSeconds, 0.05f, 1.0f);
             DrawFloatSlider("移动速度", ref settings.MoveSpeed, 1f, 12f);
             DrawFloatSlider("喷射冷却", ref settings.SprayCooldown, 0.01f, 0.5f);
+            DrawFloatSlider("蓄力时间", ref settings.ChargeHoldSeconds, 0.05f, 0.5f);
+            DrawFloatSlider("冲击波冷却", ref settings.ShockwaveCooldown, 0.1f, 2f);
+            DrawIntSlider("取色格数上限", ref settings.ShockwaveAbsorbTileLimit, 1, 8);
+            DrawIntSlider("取色搜索半径", ref settings.ShockwaveAbsorbSearchRadius, 1, 5);
+            DrawFloatSlider("冲击波半径", ref settings.ShockwaveRadiusBase, 0.5f, 3f);
+            DrawFloatSlider("冲击波力道", ref settings.ShockwaveForceBase, 1f, 12f);
             DrawFloatSlider("闪避冷却", ref settings.DodgeCooldown, 0.05f, 2f);
             DrawFloatSlider("闪避速度", ref settings.DodgeSpeed, 1f, 20f);
             DrawFloatSlider("击退速度", ref settings.KnockbackSpeed, 1f, 20f);
@@ -157,6 +181,68 @@ namespace Project.Gameplay.Debug
             }
 
             GUILayout.EndVertical();
+        }
+
+        private void SubscribeEvents()
+        {
+            if (EventManager.Instance == null)
+            {
+                return;
+            }
+
+            EventManager.Instance.Subscribe<OnTileAbsorbedEvent>(HandleTileAbsorbed);
+            EventManager.Instance.Subscribe<OnPlayerChargeStartedEvent>(HandlePlayerChargeStarted);
+            EventManager.Instance.Subscribe<OnPlayerShockwaveEvent>(HandlePlayerShockwave);
+            EventManager.Instance.Subscribe<OnPlayerHitEvent>(HandlePlayerHit);
+        }
+
+        private void UnsubscribeEvents()
+        {
+            if (EventManager.Instance == null)
+            {
+                return;
+            }
+
+            EventManager.Instance.Unsubscribe<OnTileAbsorbedEvent>(HandleTileAbsorbed);
+            EventManager.Instance.Unsubscribe<OnPlayerChargeStartedEvent>(HandlePlayerChargeStarted);
+            EventManager.Instance.Unsubscribe<OnPlayerShockwaveEvent>(HandlePlayerShockwave);
+            EventManager.Instance.Unsubscribe<OnPlayerHitEvent>(HandlePlayerHit);
+        }
+
+        private void HandleTileAbsorbed(OnTileAbsorbedEvent eventData)
+        {
+            _latestAbsorbMessage = $"P{eventData.PlayerID} 吸收 Tile {eventData.TileID} @ {eventData.GridPosition}";
+            _latestAbsorbMessageTime = Time.unscaledTime;
+        }
+
+        private void HandlePlayerChargeStarted(OnPlayerChargeStartedEvent eventData)
+        {
+            _latestChargeMessage = eventData.AbsorbedTileCount > 0
+                ? $"P{eventData.PlayerID} 启动取色，吸收{eventData.AbsorbedTileCount}格，搜索半径{eventData.SearchRadius}"
+                : $"P{eventData.PlayerID} 启动取色，但附近没有可吸收的己方格子（搜索半径{eventData.SearchRadius}）";
+            _latestChargeMessageTime = Time.unscaledTime;
+        }
+
+        private void HandlePlayerShockwave(OnPlayerShockwaveEvent eventData)
+        {
+            _latestShockwaveMessage = $"P{eventData.PlayerID} 等级{eventData.ShockwaveTier} 吸收{eventData.AbsorbedTileCount} 半径{eventData.Radius:0.0} 力{eventData.Force:0.0}";
+            _latestShockwaveMessageTime = Time.unscaledTime;
+        }
+
+        private void HandlePlayerHit(OnPlayerHitEvent eventData)
+        {
+            _latestHitMessage = $"P{eventData.AttackerPlayerID} -> P{eventData.DefenderPlayerID} 伤害{eventData.DamagePercent:0.0}% 力{eventData.Force.magnitude:0.0}";
+            _latestHitMessageTime = Time.unscaledTime;
+        }
+
+        private static string FormatRecentMessage(string message, float messageTime)
+        {
+            if (Time.unscaledTime - messageTime > 4f)
+            {
+                return $"{message}（旧）";
+            }
+
+            return message;
         }
 
         private void DrawPlayerWorldMarkers()

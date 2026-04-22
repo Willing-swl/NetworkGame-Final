@@ -22,6 +22,18 @@ namespace Project.Gameplay.Config
         [Min(0.01f)] public float EnemyCaptureSeconds = 0.25f;
         [Min(0.01f)] public float SprayRange = 3f;
 
+        [Header("Shockwave")]
+        [Min(0.01f)] public float ChargeHoldSeconds = 0.18f;
+        [Min(0.01f)] public float ShockwaveCooldown = 0.9f;
+        [Min(1)] public int ShockwaveAbsorbTileLimit = 80;
+        [Min(1)] public int ShockwaveAbsorbSearchRadius = 2;
+        [Min(0.1f)] public float ShockwaveRadiusBase = 2.35f;
+        [Min(0.1f)] public float ShockwaveRadiusTierStep = 0.9f;
+        [Min(0.1f)] public float ShockwaveForceBase = 8f;
+        [Min(0.1f)] public float ShockwaveForceTierStep = 3.5f;
+        [Min(0.1f)] public float ShockwaveDamageBase = 10f;
+        [Min(0.1f)] public float ShockwaveDamageTierStep = 6f;
+
         [Header("Player")]
         [Min(0.1f)] public float MoveSpeed = 4.5f;
         [Min(1f)] public float RotationSpeed = 720f;
