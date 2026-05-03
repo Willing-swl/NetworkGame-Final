@@ -95,6 +95,8 @@ namespace NanoFrame.Core // 完全使用你原有的核心命名空间
 
         private void EnsurePrototypePresentation()
         {
+            bool hasScenePresentationRoot = FindObjectOfType<PrototypeScenePresentationRoot>() != null;
+
             Camera camera = Camera.main;
             if (camera == null)
             {
@@ -109,9 +111,34 @@ namespace NanoFrame.Core // 完全使用你原有的核心命名空间
                 camera = cameraObject.AddComponent<Camera>();
                 cameraObject.AddComponent<AudioListener>();
                 DontDestroyOnLoad(cameraObject);
+                ConfigurePrototypeCamera(camera);
             }
 
-            ConfigurePrototypeCamera(camera);
+            else if (hasScenePresentationRoot)
+            {
+                if (!camera.gameObject.CompareTag("MainCamera"))
+                {
+                    camera.gameObject.tag = "MainCamera";
+                }
+
+                PrototypeCameraFollow follow = camera.GetComponent<PrototypeCameraFollow>();
+                if (follow != null)
+                {
+                    follow.enabled = false;
+                }
+
+                if (camera.GetComponent<AudioListener>() == null && FindObjectOfType<AudioListener>() == null)
+                {
+                    camera.gameObject.AddComponent<AudioListener>();
+                }
+
+                DontDestroyOnLoad(camera.gameObject);
+            }
+
+            else
+            {
+                ConfigurePrototypeCamera(camera);
+            }
 
             if (FindObjectOfType<Light>() == null)
             {
