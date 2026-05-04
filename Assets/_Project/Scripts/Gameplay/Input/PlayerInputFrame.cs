@@ -11,9 +11,10 @@ namespace Project.Gameplay.Input
         public readonly bool ChargeHeld;
         public readonly bool ChargePressed;
         public readonly bool DodgePressed;
+        public readonly bool JumpPressed;
         public readonly bool PausePressed;
 
-        public PlayerInputFrame(Vector2 move, Vector2 aim, bool sprayHeld, bool sprayPressed, bool chargeHeld, bool chargePressed, bool dodgePressed, bool pausePressed)
+            public PlayerInputFrame(Vector2 move, Vector2 aim, bool sprayHeld, bool sprayPressed, bool chargeHeld, bool chargePressed, bool dodgePressed, bool jumpPressed, bool pausePressed)
         {
             Move = move;
             Aim = aim;
@@ -22,6 +23,7 @@ namespace Project.Gameplay.Input
             ChargeHeld = chargeHeld;
             ChargePressed = chargePressed;
             DodgePressed = dodgePressed;
+            JumpPressed = jumpPressed;
             PausePressed = pausePressed;
         }
 
@@ -30,5 +32,7 @@ namespace Project.Gameplay.Input
         public bool HasAimInput => Aim.sqrMagnitude > 0.01f;
 
         public bool HasChargeInput => ChargeHeld || ChargePressed;
+
+        public bool HasJumpInput => JumpPressed;
     }
 }

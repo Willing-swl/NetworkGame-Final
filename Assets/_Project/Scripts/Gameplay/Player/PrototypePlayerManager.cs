@@ -15,6 +15,10 @@ namespace Project.Gameplay.Player
         private GameObject _playerRoot;
         private PrototypeBalanceConfig _settings;
 
+        [SerializeField] private GameObject _playerPrefab;
+        private const string PlayerPrefabPath = "Gameplay/Chicken";
+        
+
         public IReadOnlyList<PlayerController> Players => _players;
 
         public void OnInit()
@@ -93,11 +97,34 @@ namespace Project.Gameplay.Player
             CreatePlayer(2, _settings.GetBodyColor(2));
         }
 
-        private void CreatePlayer(int playerId, Color bodyColor)
+        private void EnsurePlayerPrefabLoaded()
         {
-            GameObject playerObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+            if (_playerPrefab != null)
+            {
+                return;
+            }
+
+            _playerPrefab = Resources.Load<GameObject>(PlayerPrefabPath);
+            if (_playerPrefab == null)
+            {
+                UnityEngine.Debug.LogError("[PrototypePlayerManager] 找不到玩家 prefab: Resources/Gameplay/Chicken.prefab");
+            }
+        }
+
+
+                private void CreatePlayer(int playerId, Color bodyColor)
+        {
+            EnsurePlayerPrefabLoaded();
+            if (_playerPrefab == null)
+            {
+                return;
+            }
+
+            GameObject playerObject = Object.Instantiate(_playerPrefab);
             playerObject.name = $"Player_{playerId}";
             playerObject.transform.SetParent(_playerRoot.transform, false);
+            playerObject.transform.localPosition = Vector3.zero;
+            playerObject.transform.localRotation = Quaternion.identity;
 
             Rigidbody rigidbody = playerObject.GetComponent<Rigidbody>();
             if (rigidbody == null)
@@ -105,16 +132,70 @@ namespace Project.Gameplay.Player
                 rigidbody = playerObject.AddComponent<Rigidbody>();
             }
 
-            rigidbody.useGravity = false;
-            rigidbody.isKinematic = true;
-            rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
-            rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            //rigidbody.useGravity = false;
+            //rigidbody.isKinematic = true;
+            //rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+            //rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-            PlayerController controller = playerObject.AddComponent<PlayerController>();
+            PlayerRoamingController legacyInput = playerObject.GetComponent<PlayerRoamingController>();
+            if (legacyInput != null)
+            {
+                Object.Destroy(legacyInput);
+            }
+
+            Animator animator = playerObject.GetComponent<Animator>();
+            if (animator != null)
+            {
+                animator.applyRootMotion = false;
+            }
+
+            PlayerController controller = playerObject.GetComponent<PlayerController>();
+            if (controller == null)
+            {
+                controller = playerObject.AddComponent<PlayerController>();
+            }
+
             controller.Initialize(playerId, _settings, bodyColor);
-            _players.Add(controller);
 
-            UnityEngine.Debug.Log($"[PrototypePlayerManager] 生成 P{playerId}，初始位置={playerObject.transform.position}");
+            
+            if (playerObject.GetComponent<PlayerAnimatorBridge>() == null)
+            {
+                playerObject.AddComponent<PlayerAnimatorBridge>();
+            }
+            _players.Add(controller);
         }
+
+
+
+
+        // private void CreatePlayer(int playerId, Color bodyColor)
+        // {
+            
+
+        //     //GameObject playerObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        //     GameObject playerObject = GameObject.CreatePrimitive(PrimitiveType.Capsule);
+        //     playerObject.name = $"Player_{playerId}";
+        //     playerObject.transform.SetParent(_playerRoot.transform, false);//设置父对象为玩家根对象，并保持局部变换不变
+        //     playerObject.transform.localPosition = Vector3.zero;//用于重置时设置初始位置，后续会根据出生点进行调整
+        //     playerObject.transform.localRotation = Quaternion.identity;///用于重置时设置初始旋转，后续会根据出生点进行调整
+
+        //     Rigidbody rigidbody = playerObject.GetComponent<Rigidbody>();
+        //     if (rigidbody == null)
+        //     {
+        //         rigidbody = playerObject.AddComponent<Rigidbody>();
+        //     }
+
+        //     rigidbody.useGravity = false;
+        //     rigidbody.isKinematic = true;
+        //     rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
+        //     rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+
+        //     PlayerController controller = playerObject.AddComponent<PlayerController>();
+        //     controller.Initialize(playerId, _settings, bodyColor);
+        //     _players.Add(controller);
+
+        //     UnityEngine.Debug.Log($"[PrototypePlayerManager] 生成 P{playerId}，初始位置={playerObject.transform.position}");
+        // }
     }
 }
+// }

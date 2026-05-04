@@ -28,6 +28,7 @@ namespace Project.Gameplay.Input
             { KeyCode.Q, Key.Q },
             { KeyCode.E, Key.E },
             { KeyCode.Keypad0, Key.Numpad0 },
+            { KeyCode.Keypad1, Key.Numpad1 },
             { KeyCode.Space, Key.Space },
             { KeyCode.Tab, Key.Tab },
             { KeyCode.Escape, Key.Escape },
@@ -61,9 +62,10 @@ namespace Project.Gameplay.Input
             bool chargeHeld = IsHeld(_bindings.Charge);
             bool chargePressed = IsPressed(_bindings.Charge);
             bool dodgePressed = IsPressed(_bindings.Dodge);
+            bool jumpPressed = IsPressed(_bindings.Jump);
             bool pausePressed = IsPressed(_bindings.Pause);
 
-            return new PlayerInputFrame(move, aim, sprayHeld, sprayPressed, chargeHeld, chargePressed, dodgePressed, pausePressed);
+            return new PlayerInputFrame(move, aim, sprayHeld, sprayPressed, chargeHeld, chargePressed, dodgePressed, jumpPressed, pausePressed);
         }
 
         private Vector2 ReadMoveVector()

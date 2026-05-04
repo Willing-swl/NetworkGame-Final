@@ -12,12 +12,24 @@ namespace Project.Gameplay.Input
         public KeyCode MoveRight = KeyCode.D;
         public KeyCode Spray = KeyCode.F;
         public KeyCode Charge = KeyCode.Q;
-        public KeyCode Dodge = KeyCode.Space;
+        public KeyCode Dodge = KeyCode.LeftShift;
+        public KeyCode Jump = KeyCode.Space;
         public KeyCode Pause = KeyCode.Escape;
 
         public static PlayerKeyboardBindings CreateP1()
         {
-            return new PlayerKeyboardBindings();
+            return new PlayerKeyboardBindings
+            {
+                MoveUp = KeyCode.W,
+                MoveDown = KeyCode.S,
+                MoveLeft = KeyCode.A,
+                MoveRight = KeyCode.D,
+                Spray = KeyCode.F,
+                Charge = KeyCode.Q,
+                Dodge = KeyCode.LeftShift,
+                Jump = KeyCode.Space,
+                Pause = KeyCode.Escape
+            };
         }
 
         public static PlayerKeyboardBindings CreateP2()
@@ -31,6 +43,7 @@ namespace Project.Gameplay.Input
                 Spray = KeyCode.RightControl,
                 Charge = KeyCode.Keypad0,
                 Dodge = KeyCode.RightShift,
+                Jump = KeyCode.Keypad1,
                 Pause = KeyCode.KeypadEnter
             };
         }

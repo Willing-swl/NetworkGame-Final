@@ -18,6 +18,7 @@ namespace Project.Gameplay.Player
         {
             Idle,
             Move,
+            Jump,
             Spray,
             Dodge,
             Hurt,
@@ -56,6 +57,11 @@ namespace Project.Gameplay.Player
         public bool CanCharge => _shockwaveCooldownRemaining <= 0f;
         public bool CanDodge => _dodgeCooldownRemaining <= 0f;
 
+
+        public Vector2 CurrentMoveInput => _currentInput.Move;
+        public Vector3 FacingDirection => _facingDirection;
+        public string CurrentStateName => _currentStateName;
+
         public void Initialize(int playerId, PrototypeBalanceConfig settings, Color bodyColor)
         {
             _playerId = playerId;
@@ -68,16 +74,17 @@ namespace Project.Gameplay.Player
             _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
-            Material sharedMaterial = PrototypeMaterialFactory.GetSharedLitMaterial();
-            if (_renderer != null && sharedMaterial != null)
-            {
-                _renderer.sharedMaterial = sharedMaterial;
-                VisualUtility.SetInstancedColor(_renderer, bodyColor);
-            }
+            //Material sharedMaterial = PrototypeMaterialFactory.GetSharedLitMaterial();
+            // if (_renderer != null && sharedMaterial != null)
+            // {
+            //     _renderer.sharedMaterial = sharedMaterial;
+            //     VisualUtility.SetInstancedColor(_renderer, bodyColor);
+            // }
 
             _stateMachine = new StateMachine<PlayerController>(this);
             _stateMachine.AddState(new IdleState());
             _stateMachine.AddState(new MoveState());
+            _stateMachine.AddState(new JumpState());
             _stateMachine.AddState(new SprayState());
             _stateMachine.AddState(new ChargeState());
             _stateMachine.AddState(new DodgeState());
@@ -447,6 +454,12 @@ namespace Project.Gameplay.Player
 
             public override void OnUpdate(PlayerController owner)
             {
+                if (owner._currentInput.JumpPressed)
+                {
+                    owner._stateMachine.ChangeState<JumpState>();
+                    return;
+                }
+
                 if (owner._currentInput.HasChargeInput && owner.CanCharge)
                 {
                     owner._stateMachine.ChangeState<ChargeState>();
@@ -482,6 +495,12 @@ namespace Project.Gameplay.Player
 
             public override void OnUpdate(PlayerController owner)
             {
+                if (owner._currentInput.JumpPressed)
+                {
+                    owner._stateMachine.ChangeState<JumpState>();
+                    return;
+                }
+
                 if (owner._currentInput.HasChargeInput && owner.CanCharge)
                 {
                     owner._stateMachine.ChangeState<ChargeState>();
@@ -508,6 +527,33 @@ namespace Project.Gameplay.Player
                 }
 
                 owner._stateMachine.ChangeState<IdleState>();
+            }
+        }
+
+        private sealed class JumpState : PlayerStateBase
+        {
+            public override void OnEnter(PlayerController owner)
+            {
+                owner._isInvulnerable = false;
+                owner._stateTimer = 0.18f;
+                owner.TriggerStateChanged(nameof(JumpState));
+            }
+
+            public override void OnUpdate(PlayerController owner)
+            {
+                owner._stateTimer = Mathf.Max(0f, owner._stateTimer - owner._currentDeltaTime);
+
+                if (owner._stateTimer > 0f)
+                {
+                    return;
+                }
+
+                owner.FinishActionState();
+            }
+
+            public override void OnExit(PlayerController owner)
+            {
+                owner._stateTimer = 0f;
             }
         }
 
