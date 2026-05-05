@@ -397,6 +397,13 @@ namespace Project.Gameplay.Player
 
         private void FinishActionState()
         {
+            // 跳跃优先级最高（防止取色释放后因 ChargeHeld 仍为 true 而错过跳跃）
+            if (_currentInput.JumpPressed)
+            {
+                _stateMachine.ChangeState<JumpState>();
+                return;
+            }
+
             if (_currentInput.ChargeHeld && CanCharge)
             {
                 _stateMachine.ChangeState<ChargeState>();

@@ -447,7 +447,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e14fb7606d2087740ad0d1c61918c402, type: 2}
+  - {fileID: 2100000, guid: 67026045975602343b7cd4d772dbb5cb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -798,7 +798,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 383e0e166823fb24499b356ade55f34d, type: 2}
+  - {fileID: 2100000, guid: b1d1450b6663f644eb4798b9c3da2db4, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -987,7 +987,7 @@ SkinnedMeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: a51898c324ae38d4a89a70efa1d87b1a, type: 2}
+  - {fileID: 2100000, guid: b43f496f482c5c644b75878f04676124, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1868,7 +1868,7 @@ GameObject:
   - component: {fileID: 3901859291156245828}
   - component: {fileID: 6133001166747638363}
   m_Layer: 0
-  m_Name: Chicken
+  m_Name: Chicken_P2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

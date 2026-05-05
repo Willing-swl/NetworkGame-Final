@@ -6,7 +6,7 @@ using Project.Gameplay.Match;
 using Project.Gameplay.Player;
 using UnityEngine;
 
-namespace Project.Gameplay.Debug
+namespace Project.Gameplay.Debugging
 {
     public class PrototypeDebugPanel : MonoBehaviour
     {

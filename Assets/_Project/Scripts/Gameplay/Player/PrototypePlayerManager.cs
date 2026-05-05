@@ -15,8 +15,10 @@ namespace Project.Gameplay.Player
         private GameObject _playerRoot;
         private PrototypeBalanceConfig _settings;
 
-        [SerializeField] private GameObject _playerPrefab;
-        private const string PlayerPrefabPath = "Gameplay/Chicken";
+        [SerializeField] private GameObject _playerPrefabP1;
+        [SerializeField] private GameObject _playerPrefabP2;
+        private const string PlayerPrefabPathP1 = "Gameplay/Chicken_P1";
+        private const string PlayerPrefabPathP2 = "Gameplay/Chicken_P2";
         
 
         public IReadOnlyList<PlayerController> Players => _players;
@@ -99,15 +101,18 @@ namespace Project.Gameplay.Player
 
         private void EnsurePlayerPrefabLoaded()
         {
-            if (_playerPrefab != null)
+            if (_playerPrefabP1 == null)
             {
-                return;
+                _playerPrefabP1 = Resources.Load<GameObject>(PlayerPrefabPathP1);
+                if (_playerPrefabP1 == null)
+                    UnityEngine.Debug.LogError($"[PrototypePlayerManager] 找不到P1 prefab: Resources/{PlayerPrefabPathP1}.prefab");
             }
 
-            _playerPrefab = Resources.Load<GameObject>(PlayerPrefabPath);
-            if (_playerPrefab == null)
+            if (_playerPrefabP2 == null)
             {
-                UnityEngine.Debug.LogError("[PrototypePlayerManager] 找不到玩家 prefab: Resources/Gameplay/Chicken.prefab");
+                _playerPrefabP2 = Resources.Load<GameObject>(PlayerPrefabPathP2);
+                if (_playerPrefabP2 == null)
+                    UnityEngine.Debug.LogError($"[PrototypePlayerManager] 找不到P2 prefab: Resources/{PlayerPrefabPathP2}.prefab");
             }
         }
 
@@ -115,12 +120,14 @@ namespace Project.Gameplay.Player
                 private void CreatePlayer(int playerId, Color bodyColor)
         {
             EnsurePlayerPrefabLoaded();
-            if (_playerPrefab == null)
+            
+            GameObject prefabToUse = (playerId == 1) ? _playerPrefabP1 : _playerPrefabP2;
+            if (prefabToUse == null)
             {
                 return;
             }
 
-            GameObject playerObject = Object.Instantiate(_playerPrefab);
+            GameObject playerObject = Object.Instantiate(prefabToUse);
             playerObject.name = $"Player_{playerId}";
             playerObject.transform.SetParent(_playerRoot.transform, false);
             playerObject.transform.localPosition = Vector3.zero;
