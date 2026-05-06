@@ -64,6 +64,7 @@ namespace Project.Gameplay.Grid
                     cell.View?.ApplyVisual(_settings.NeutralTileColor, 0f);
                 }
             }
+            BroadcastTerritoryCount();
         }
 
         public void RefreshAllCellsVisuals()
@@ -330,6 +331,8 @@ namespace Project.Gameplay.Grid
                 TileID = cell.TileID
             });
 
+            BroadcastTerritoryCount();
+
             return true;
         }
 
@@ -359,6 +362,27 @@ namespace Project.Gameplay.Grid
                 PlayerID = playerId,
                 TileID = cell.TileID,
                 GridPosition = cell.GridPosition
+            });
+
+            BroadcastTerritoryCount();
+        }
+
+        private void BroadcastTerritoryCount()
+        {
+            int totalTiles = _settings.GridWidth * _settings.GridHeight;
+
+            EventManager.Instance.Fire(new TerritoryCountChangedEvent
+            {
+                PlayerId = 1,
+                MyTileCount = _player1TerritoryCount,
+                TotalTileCount = totalTiles
+            });
+
+            EventManager.Instance.Fire(new TerritoryCountChangedEvent
+            {
+                PlayerId = 2,
+                MyTileCount = _player2TerritoryCount,
+                TotalTileCount = totalTiles
             });
         }
 

@@ -13,7 +13,7 @@ namespace Project.Gameplay.Player
     /// </summary>
     public class PlayerAnimatorBridge : MonoBehaviour
     {
-        // Inspector 可选拖入，也可以让脚本自动查找
+        
         [SerializeField] private PlayerController controller;
 
         private Animator _animator;

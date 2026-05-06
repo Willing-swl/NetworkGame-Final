@@ -31,6 +31,18 @@ namespace Project.Gameplay.Player
         private Rigidbody _rigidbody;
         private Renderer _renderer;
 
+        [Header("Inflatable Settings (充气悖论)")]
+        [SerializeField] private float _baseScale = 1.0f;       
+        [SerializeField] private float _maxScale = 1.5f;       
+        [SerializeField] private float _inflationSpeed = 5.0f;  // 充气/放气的动画平滑速度
+        private float _targetScale = 1.0f;
+
+        [Header("Ammo System (弹药系统)")]
+        [SerializeField] private float _maxAmmo = 100f;          
+        [SerializeField] private float _sprayConsumePerShot = 20f;  
+        [SerializeField] private float _ammoRecoverRate = 10f;   
+        private float _currentAmmo = 100f; 
+
         private PlayerInputFrame _currentInput;
         private Vector3 _facingDirection = Vector3.forward;
         private Vector3 _knockbackDirection = Vector3.zero;
@@ -53,10 +65,13 @@ namespace Project.Gameplay.Player
         public int PlayerId => _playerId;
         public bool IsEliminated => _isEliminated;
         public bool HasMoveInput => _currentInput.HasMoveInput && _currentInput.Move.sqrMagnitude >= _settings.DeadZone * _settings.DeadZone;
-        public bool CanSpray => _sprayCooldownRemaining <= 0f;
+
+        public bool CanSpray => _sprayCooldownRemaining <= 0f && _currentAmmo > 20f ;  //添加冷却逻辑
         public bool CanCharge => _shockwaveCooldownRemaining <= 0f;
         public bool CanDodge => _dodgeCooldownRemaining <= 0f;
 
+        public float CurrentAmmo => _currentAmmo;
+        public float MaxAmmo => _maxAmmo;
 
         public Vector2 CurrentMoveInput => _currentInput.Move;
         public Vector3 FacingDirection => _facingDirection;
@@ -92,6 +107,16 @@ namespace Project.Gameplay.Player
             _stateMachine.AddState(new KnockbackState());
             _stateMachine.AddState(new EliminatedState());
             _stateMachine.ChangeState<IdleState>();
+
+            EventManager.Instance.Subscribe<TerritoryCountChangedEvent>(OnTerritoryCountChanged);
+        }
+
+        private void OnDestroy()
+        {
+            if (EventManager.Instance != null)
+            {
+                EventManager.Instance.Unsubscribe<TerritoryCountChangedEvent>(OnTerritoryCountChanged);
+            }
         }
 
         public void ResetForMatch(Vector3 spawnPosition, Vector3 facingDirection)
@@ -109,12 +134,18 @@ namespace Project.Gameplay.Player
             _shockwaveCooldownRemaining = 0f;
             _dodgeCooldownRemaining = 0f;
             _stateTimer = 0f;
+
+            _currentAmmo = _maxAmmo; 
+
             _knockbackDirection = Vector3.zero;
             _chargeAbsorbedTileCount = 0;
             _currentInput = default;
             _facingDirection = NormalizeFacingDirection(facingDirection);
             _currentStateName = nameof(IdleState);
             _nextMovementDebugLogTime = 0f;
+
+            _targetScale = _baseScale;
+            transform.localScale = new Vector3(_baseScale, _baseScale, _baseScale);
 
             _rigidbody.position = spawnPosition;
             _rigidbody.rotation = Quaternion.LookRotation(_facingDirection, Vector3.up);
@@ -155,6 +186,26 @@ namespace Project.Gameplay.Player
             }
 
             _stateMachine?.Update();
+
+            if (Mathf.Abs(transform.localScale.x - _targetScale) > 0.001f)
+            {
+                float currentScale = Mathf.Lerp(transform.localScale.x, _targetScale, _currentDeltaTime * _inflationSpeed);
+                transform.localScale = new Vector3(currentScale, currentScale, currentScale);
+            }
+
+            if (_currentStateName != nameof(SprayState))
+            {
+                if (_currentAmmo < _maxAmmo)
+                {
+                    _currentAmmo = Mathf.Min(_maxAmmo, _currentAmmo + _ammoRecoverRate * _currentDeltaTime);
+
+                    // 【测试用代码，测试完后可删】
+                    if (Time.frameCount % 10 == 0)
+                    {
+                        Debug.Log($"[P{_playerId}] 停止喷漆，快速回蓝中... {_currentAmmo:0.0} / {_maxAmmo}");
+                    }
+                }
+            }
 
             if (!_isEliminated && !PrototypeGridManager.Instance.IsInsideArena(_rigidbody.position))
             {
@@ -207,6 +258,16 @@ namespace Project.Gameplay.Player
             });
 
             LogDebug($"状态切换 -> {stateName} 位置={FormatVector3(_rigidbody.position)}");
+        }
+
+        private void OnTerritoryCountChanged(TerritoryCountChangedEvent evt)
+        {
+            if (evt.PlayerId != this._playerId) return;
+            if (evt.TotalTileCount <= 0) return;
+
+            float territoryPercentage = (float)evt.MyTileCount / evt.TotalTileCount;
+            float scaleIncrease = territoryPercentage * 0.5f;
+            _targetScale = Mathf.Clamp(_baseScale + scaleIncrease, _baseScale, _maxScale);
         }
 
         private Vector3 GetMoveDirection()
@@ -264,6 +325,9 @@ namespace Project.Gameplay.Player
             {
                 return;
             }
+
+            _currentAmmo = Mathf.Max(0f, _currentAmmo - _sprayConsumePerShot);
+            Debug.Log($"[P{_playerId}] 喷射了一次！消耗20%，剩余弹药: {_currentAmmo}");
 
             _sprayCooldownRemaining = _settings.SprayCooldown;
             Vector3 sprayDirection = _facingDirection;
@@ -359,7 +423,6 @@ namespace Project.Gameplay.Player
             });
 
             LogDebug($"冲击波释放，平滑等级={shockwaveTier} 吸收格子={_chargeAbsorbedTileCount} 半径={radius:0.00} 力={force:0.00}");
-
             _chargeAbsorbedTileCount = 0;
             FinishActionState();
         }
@@ -587,6 +650,12 @@ namespace Project.Gameplay.Player
                 if (owner._currentInput.DodgePressed && owner.CanDodge)
                 {
                     owner._stateMachine.ChangeState<DodgeState>();
+                    return;
+                }
+
+                if (owner._currentAmmo <= 20f)
+                {
+                    owner.FinishActionState();
                     return;
                 }
 

@@ -5,15 +5,12 @@ using NanoFrame.Rendering;
 
 namespace NanoFrame.Event
 {
-    // 以后你的游戏里需要加新事件，全部按照这个格式写在这里！
 
-    // 示例1：玩家死亡事件
     public struct OnPlayerDieEvent : IEventMessage
     {
-        public int PlayerID; // 告诉系统是 1P 还是 2P 死了
+        public int PlayerID; 
     }
 
-    // 示例2：重力改变事件
     public struct OnGravityChangedEvent : IEventMessage
     {
         public float NewGravityMultiplier;
@@ -27,7 +24,6 @@ namespace NanoFrame.Event
     }
     public struct OnInkSolidifiedEvent : IEventMessage
     {
-        // 你可以把触发实体化的游戏物体传出去，方便别人获取它的位置或组件
         public GameObject InkObject;
     }
 
@@ -110,5 +106,12 @@ namespace NanoFrame.Event
     {
         public RenderMoodPhase Phase;
         public bool IsManual;
+    }
+
+    public struct TerritoryCountChangedEvent : IEventMessage
+    {
+        public int PlayerId;        // 1代表P1，2代表P2
+        public int MyTileCount;     
+        public int TotalTileCount;  // 121
     }
 }
