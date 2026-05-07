@@ -125,43 +125,76 @@ namespace Project.Gameplay.Grid
             return Mathf.Abs(worldPosition.x) <= halfWidth && Mathf.Abs(worldPosition.z) <= halfHeight;
         }
 
+        //public bool TryApplySpray(int playerId, Vector3 worldPosition, Vector3 facingDirection, float deltaTime)
+        //{
+        //    if (_cells == null || _settings == null)
+        //    {
+        //        return false;
+        //    }
+
+        //    Vector2Int currentCell = WorldToCell(worldPosition);
+        //    if (!IsValidCell(currentCell))
+        //    {
+        //        return false;
+        //    }
+
+        //    Vector2Int offset = DirectionToOffset(facingDirection);
+        //    if (offset == Vector2Int.zero)
+        //    {
+        //        return false;
+        //    }
+
+        //    int reach = Mathf.Clamp(Mathf.RoundToInt(_settings.SprayRange), 1, Mathf.Max(_settings.GridWidth, _settings.GridHeight));
+        //    float stepDeltaTime = deltaTime / reach;
+        //    bool appliedAny = false;
+
+        //    for (int step = 1; step <= reach; step++)
+        //    {
+        //        Vector2Int targetCell = new Vector2Int(currentCell.x + offset.x * step, currentCell.y + offset.y * step);
+        //        if (!IsValidCell(targetCell))
+        //        {
+        //            break;
+        //        }
+
+        //        appliedAny |= ApplyCapture(targetCell, playerId, stepDeltaTime);
+        //    }
+
+        //    return appliedAny;
+        //}
         public bool TryApplySpray(int playerId, Vector3 worldPosition, Vector3 facingDirection, float deltaTime)
         {
             if (_cells == null || _settings == null)
             {
                 return false;
             }
-
-            Vector2Int currentCell = WorldToCell(worldPosition);
-            if (!IsValidCell(currentCell))
+            Vector3 flattenedDir = Vector3.ProjectOnPlane(facingDirection, Vector3.up).normalized;
+            if (flattenedDir.sqrMagnitude < 0.0001f)
             {
                 return false;
             }
 
-            Vector2Int offset = DirectionToOffset(facingDirection);
-            if (offset == Vector2Int.zero)
-            {
-                return false;
-            }
+            float angle = Mathf.Atan2(flattenedDir.z, flattenedDir.x) * Mathf.Rad2Deg;
+            float snappedAngle = Mathf.Round(angle / 45f) * 45f;
 
-            int reach = Mathf.Clamp(Mathf.RoundToInt(_settings.SprayRange), 1, Mathf.Max(_settings.GridWidth, _settings.GridHeight));
-            float stepDeltaTime = deltaTime / reach;
+            int offsetX = Mathf.RoundToInt(Mathf.Cos(snappedAngle * Mathf.Deg2Rad));
+            int offsetZ = Mathf.RoundToInt(Mathf.Sin(snappedAngle * Mathf.Deg2Rad));
+            Vector2Int gridOffset = new Vector2Int(offsetX, offsetZ);
+
+            Vector2Int startCell = WorldToCell(worldPosition);
             bool appliedAny = false;
 
-            for (int step = 1; step <= reach; step++)
+            int maxTilesToColor = 3;
+            for (int i = 0; i < maxTilesToColor; i++)
             {
-                Vector2Int targetCell = new Vector2Int(currentCell.x + offset.x * step, currentCell.y + offset.y * step);
+                Vector2Int targetCell = startCell + gridOffset * i;
                 if (!IsValidCell(targetCell))
                 {
                     break;
                 }
-
-                appliedAny |= ApplyCapture(targetCell, playerId, stepDeltaTime);
+                appliedAny |= ApplyCapture(targetCell, playerId, deltaTime);
             }
-
             return appliedAny;
         }
-
         public int AbsorbTilesForShockwave(int playerId, Vector3 worldPosition, int maxTiles)
         {
             if (_cells == null || _settings == null)
@@ -401,21 +434,21 @@ namespace Project.Gameplay.Grid
             return cellPosition.x >= 0 && cellPosition.x < _settings.GridWidth && cellPosition.y >= 0 && cellPosition.y < _settings.GridHeight;
         }
 
-        private Vector2Int DirectionToOffset(Vector3 direction)
-        {
-            Vector3 flattened = Vector3.ProjectOnPlane(direction, Vector3.up);
-            if (flattened.sqrMagnitude < 0.0001f)
-            {
-                return Vector2Int.zero;
-            }
+        //private Vector2Int DirectionToOffset(Vector3 direction)
+        //{
+        //    Vector3 flattened = Vector3.ProjectOnPlane(direction, Vector3.up);
+        //    if (flattened.sqrMagnitude < 0.0001f)
+        //    {
+        //        return Vector2Int.zero;
+        //    }
 
-            if (Mathf.Abs(flattened.x) >= Mathf.Abs(flattened.z))
-            {
-                return new Vector2Int(flattened.x >= 0f ? 1 : -1, 0);
-            }
+        //    if (Mathf.Abs(flattened.x) >= Mathf.Abs(flattened.z))
+        //    {
+        //        return new Vector2Int(flattened.x >= 0f ? 1 : -1, 0);
+        //    }
 
-            return new Vector2Int(0, flattened.z >= 0f ? 1 : -1);
-        }
+        //    return new Vector2Int(0, flattened.z >= 0f ? 1 : -1);
+        //}
 
         private Color GetColorForOwner(int playerId)
         {

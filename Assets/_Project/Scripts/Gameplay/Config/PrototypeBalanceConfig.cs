@@ -11,7 +11,7 @@ namespace Project.Gameplay.Config
         [Min(0.5f)] public float TileSize = 1f;
         [Min(0f)] public float TileGap = 0.05f;
         [Min(0.05f)] public float TileHeight = 0.2f;
-        [Min(0f)] public float PlayerSpawnHeight = 1f;
+        [Min(0f)] public float PlayerSpawnHeight = 0.2f;
         [Min(0f)] public float ArenaEliminationMargin = 1.5f;
 
         [Header("Match")]

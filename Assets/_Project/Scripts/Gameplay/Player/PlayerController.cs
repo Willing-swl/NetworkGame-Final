@@ -41,7 +41,10 @@ namespace Project.Gameplay.Player
         [SerializeField] private float _maxAmmo = 100f;          
         [SerializeField] private float _sprayConsumePerShot = 20f;  
         [SerializeField] private float _ammoRecoverRate = 10f;   
-        private float _currentAmmo = 100f; 
+        private float _currentAmmo = 100f;
+
+        [Tooltip("冲击波扩散到最大半径所需的时间，用于同步视觉和伤害")]
+        [SerializeField] private float _shockwaveExpandDuration = 0.25f;
 
         private PlayerInputFrame _currentInput;
         private Vector3 _facingDirection = Vector3.forward;
@@ -272,13 +275,28 @@ namespace Project.Gameplay.Player
 
         private Vector3 GetMoveDirection()
         {
-            Vector3 direction = new Vector3(_currentInput.Move.x, 0f, _currentInput.Move.y);
-            if (direction.sqrMagnitude < _settings.DeadZone * _settings.DeadZone)
+            Vector3 inputDir = new Vector3(_currentInput.Move.x, 0f, _currentInput.Move.y);
+            if (inputDir.sqrMagnitude < _settings.DeadZone * _settings.DeadZone)
             {
                 return Vector3.zero;
             }
 
-            return direction.normalized;
+            Camera playerCam = null;
+            GameObject camObj = GameObject.Find($"PrototypeCamera_P{_playerId}");
+            if (camObj != null)
+            {
+                playerCam = camObj.GetComponent<Camera>();
+            }
+            if (playerCam != null)
+            {
+                Vector3 camForward = Vector3.ProjectOnPlane(playerCam.transform.forward, Vector3.up).normalized;
+                Vector3 camRight = Vector3.ProjectOnPlane(playerCam.transform.right, Vector3.up).normalized;
+
+                Vector3 relativeDirection = camRight * inputDir.x + camForward * inputDir.z;
+                return relativeDirection.normalized;
+            }
+
+            return inputDir.normalized;
         }
 
         private Vector3 GetPreferredDodgeDirection()
@@ -374,6 +392,16 @@ namespace Project.Gameplay.Player
             float powerRatio = Mathf.Clamp01((float)_chargeAbsorbedTileCount / _settings.ShockwaveAbsorbTileLimit);
             
             float radius = tileStep * Mathf.Lerp(_settings.ShockwaveRadiusBase, _settings.ShockwaveRadiusBase + 2f * _settings.ShockwaveRadiusTierStep, powerRatio);
+#if UNITY_EDITOR
+            for (int i = 0; i < 36; i++)
+            {
+                float angle1 = i * 10 * Mathf.Deg2Rad;
+                float angle2 = (i + 1) * 10 * Mathf.Deg2Rad;
+                Vector3 p1 = _rigidbody.position + new Vector3(Mathf.Cos(angle1), 0, Mathf.Sin(angle1)) * radius;
+                Vector3 p2 = _rigidbody.position + new Vector3(Mathf.Cos(angle2), 0, Mathf.Sin(angle2)) * radius;
+                Debug.DrawLine(p1, p2, Color.red, 2f);
+            }
+#endif
             float force = Mathf.Lerp(_settings.ShockwaveForceBase, _settings.ShockwaveForceBase + 2f * _settings.ShockwaveForceTierStep, powerRatio);
             float damagePercent = Mathf.Lerp(_settings.ShockwaveDamageBase, _settings.ShockwaveDamageBase + 2f * _settings.ShockwaveDamageTierStep, powerRatio);
 
@@ -406,7 +434,21 @@ namespace Project.Gameplay.Player
                         float falloff = 1f - Mathf.Clamp01(distance / Mathf.Max(0.01f, radius));
                         float appliedForce = force * Mathf.Lerp(0.65f, 1f, falloff);
                         float appliedDamage = damagePercent * Mathf.Lerp(0.75f, 1f, falloff);
-                        target.ApplyHit(forceDirection * appliedForce, _playerId, appliedDamage);
+
+                        //target.ApplyHit(forceDirection * appliedForce, _playerId, appliedDamage);
+
+                        float delayTime = (distance / radius) * _shockwaveExpandDuration;
+                        PlayerController hitTarget = target;
+                        Vector3 finalForce = forceDirection * appliedForce;
+                        float finalDamage = appliedDamage;
+                        int attackerId = _playerId;
+                        NanoFrame.Core.TimerManager.Instance.Register(delayTime, () =>
+                        {
+                            if (hitTarget != null && !hitTarget.IsEliminated)
+                            {
+                                hitTarget.ApplyHit(finalForce, attackerId, finalDamage);
+                            }
+                        });
                     }
                 }
             }
