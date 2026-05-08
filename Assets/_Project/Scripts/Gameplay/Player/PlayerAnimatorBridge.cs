@@ -141,7 +141,6 @@ namespace Project.Gameplay.Player
             {
                 case "IdleState":
                 case "MoveState":
-                    // 移动和待机由 InputX/InputY 的混合树驱动，不需要额外 Trigger
                     break;
 
                 case "JumpState":
